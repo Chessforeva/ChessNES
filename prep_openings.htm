@@ -1,0 +1,210 @@
+<!DOCTYPE HTML>
+<HEAD>
+<title>Prepares binary version of chess openings</title>
+</HEAD>
+
+<BODY>
+
+
+<div id="process">Wait, processing....</div>
+
+<div id="download_zone" style="
+        visibility:hidden;
+        width: 600px;
+        padding: 50px; margin: 50px auto;
+        border: 2px dashed #bbb; border-radius: 5px;
+        text-align: center; font: 20pt bold; color: #bbb;">
+<a id="download_file" style="text-align: center; font: 20pt bold; color: #bbb;">
+Save binary file
+</a>
+</div>
+
+
+<script type="text/javascript" src="prep_openings.js"></script>
+<script type="text/javascript" src="http://chessforeva.appspot.com/c1_chess.js"></script>
+
+
+<script type="text/javascript">
+
+var DBG=0;  // debug mode
+
+var CR=String.fromCharCode(13)+String.fromCharCode(10);
+var t,j,o,d,r,q, Le, L, ms;
+var mm = [], m2 = 0, bb = 0, S = "", nn = [], Bo={};
+var mv="", m, n=0,nmax = 0, bc = 0, LL = opndata.length;
+var st = 'oConst';
+
+console.log(">>> Generating chess moves");
+
+setTimeout('Process1(0)',2000); // wait 2 secs
+
+function Process1(i)
+{
+ if(i==0)
+  {
+   d = document.getElementById("download_zone");
+   d.style.visibility = "hidden";
+  }
+ d = document.getElementById("process");
+
+ for(t=200;t>0;t--,i++)
+ {
+ if(i>=LL || n<0) break;
+ o = opndata[i];
+ if(typeof(o)=="string")    // moves
+  {
+   for(j=0; j<o.length; j+=4)
+    {
+     m = o.substr(j,4);
+     mv+=m;
+     n = Bo.uci2I(m);
+     nn.push(n);
+     if(n<0)
+       {
+        d.innerHTML = "error on: ("+m+") " + o;
+        break;
+       }
+     Le = nn.length;
+     if(Le==2)
+      {
+       if(m2>0)
+         {
+          r.push(255); ms.push(""); bb++;
+          }
+       mm[m2] = { n: mv, r: [], mt:[] };
+       r = mm[m2].r; ms = mm[m2].mt;
+       
+       r.push(nn[0]); r.push(nn[1]);
+       ms.push(mv.substr(0,4)); ms.push(mv.substr(4,4));
+       
+       m2++;
+      }
+     else
+      {
+       if(m2 && Le>2)
+        {
+        r.push(n); ms.push(m); bb++;
+        }
+      }
+     if(n>nmax) nmax=n;
+     Bo.mkmove(n);
+     Bo.movegen();
+    }
+  }
+ else                   // skip to move
+  {
+   if(o)
+     {
+      if(m2) { r.push(220+o); ms.push(""); }
+      mv = mv.substr(0,mv.length+(o*4));
+     }
+   Bo = _c1.clone();
+   Bo.setFEN( _c1.sFEN );
+   nn = [];
+   if(m2 && mv.length==0) { r.push(255); ms.push(""); bb++; }
+   for(j=0; j<mv.length; j+=4)
+    {
+     m = mv.substr(j,4);
+     n = Bo.uci2I(m);
+     if(n<0)
+       {
+        d.innerHTML = "error on: ("+m+") " + o;
+        break;
+       }
+     nn.push(n);
+     if(n>nmax) nmax=n;
+     Bo.mkmove(n);
+     Bo.movegen();
+    }
+
+  }
+ }
+ 
+ if(i>=LL)
+  {
+   r.push(255); ms.push(""); bb++;
+   d.innerHTML = "Max.MoveGenNr = "+nmax+" , BinSize = "+bb+", 1stmvCases = "+m2+', mv="' + mv + '"';
+   
+   
+   S+='/*'+CR+' Generator: prep_openings.htm '+CR;
+   S+=' (raw data ' + bb + ' bytes)' + CR + '*/'+CR+CR;
+   
+   S+='#define oConst static const unsigned char' + CR;
+   S+='#define oPtr unsigned char *' + CR;  
+   S+='#define Opn1mv '+ m2 + CR+CR;
+   
+   for(j=0; j<m2; j++)
+    {
+     L = mm[j].r.length;
+     
+     for(t=L-2; t>=0; t--)
+     {
+      if(mm[j].r[t]<200) break;
+      mm[j].r[t] = 255; L--;
+     }
+     
+     S+=st+ ' Opn'+mm[j].n+'[' + L + '] = {'+CR;
+     
+     for(t=0; t<L; t++)
+     {
+      var sz = mm[j].mt[t];
+      if(!DBG) sz='';
+      S+= mm[j].r[t] +
+       (sz.length==0 ? '' : '/* ' + sz + ' */' ) +
+       (t==(L-1) ? '': ',') + (t==1 || ((t+1)%(DBG?5:30)==0) ? CR : '');
+     }
+     S+='};'+CR+CR;
+    }
+
+   S+=st+ '* OpnCases[Opn1mv] = { ';
+   for(j=0; j<m2; j++)
+    {
+     S+=(j==0 ? '': ', ') + (j%3==0 ? CR : '') + '(oPtr)Opn'+mm[j].n;
+    }
+   S+=' };'+CR+CR;
+
+
+   var ra=[];
+   appStr(ra,S);    // writing as binary chars
+   
+   
+   download(new Uint8Array(ra),"prep_openings.c");
+  }
+ else
+  {
+   if(n>=0)
+    {
+    setTimeout('Process1('+i+')',1000);
+    d.innerHTML = "Scanned " + i + " of " + LL;
+    }
+
+  }
+
+}
+   
+
+function appStr(r,s)
+{
+ for(var j=0; j<s.length; j++) r.push(s.charCodeAt(j));
+}
+
+
+function download(t, name) {
+
+    var d = document.getElementById("download_zone");
+    d.style.visibility = "visible";
+
+    var a = document.getElementById("download_file");
+    var file = new Blob([t], {type: "text/plain"});
+    a.href = URL.createObjectURL(file);
+
+    a.download = name;
+    console.log(">>> Writing file:" + name);
+    a.click();
+}
+
+
+</script>
+
+</BODY>
+</HTML>
