@@ -31,7 +31,7 @@ Nestopia v.1.40 (arrows,L)
 javascript Nezulator (arrows,X)
 
 Online version:
-http://sisenis-1193.appspot.com/ChessNES/NezulatorChess.htm
+https://chessforeva.bitbucket.io/ChessNES/NezulatorChess.htm
 
 Developer remarks:
 
