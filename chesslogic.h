@@ -483,7 +483,7 @@ void setFEN(BYTE *pos)
                 if(chess_cs[j]==c) Chess.cs += (1<<(3-j));
         }
         c = pos[++i];
-        Chess.ep = ((c==45) ? 0xFF : (c-97)+((pos[++i]-49)<<3) );
+        Chess.ep = ((c==45) ? 0xFF :  (c-97)+((pos[++i]-49)<<3) );
         for(i+=2; pos[i]!=32; i++);             // skips null-move counter
         Chess.mn = atoi( &pos[++i] );
         Chess.mh = Chess.mHist; // simply ignores garbage in hist
