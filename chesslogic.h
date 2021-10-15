@@ -412,7 +412,7 @@ void kinggen() {        /* generates all king moves */
 
 };
 
-//Give 0 to scan for 1 possible move only (faster way for checkmate,stalemate detection)
+//Give 0, or set 1 to scan for one possible move only (faster way for checkmate,stalemate detection)
 BYTE CkMt1mv;
 
 /*
